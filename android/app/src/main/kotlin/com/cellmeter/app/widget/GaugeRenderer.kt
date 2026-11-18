@@ -123,14 +123,34 @@ object GaugeRenderer {
             )
         }
 
-        val label = healthPct?.let { "${it.toInt()}" } ?: "--"
-        val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = WidgetPalette.text
-            textAlign = Paint.Align.CENTER
-            textSize = size * 0.28f
-            isFakeBoldText = true
+        // Nothing is drawn inside an unmeasured ring. A placeholder here sat
+        // above two more placeholders in the layout, so the widget said
+        // "nothing yet" three times over; the empty track already says it.
+        if (healthPct != null) {
+            val valuePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = WidgetPalette.text
+                textAlign = Paint.Align.CENTER
+                textSize = size * 0.30f
+                isFakeBoldText = true
+            }
+            canvas.drawText(
+                "${healthPct.toInt()}",
+                size / 2f,
+                size / 2f + valuePaint.textSize * 0.2f,
+                valuePaint,
+            )
+
+            canvas.drawText(
+                "%",
+                size / 2f,
+                size / 2f + valuePaint.textSize * 0.78f,
+                Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    color = WidgetPalette.textMuted
+                    textAlign = Paint.Align.CENTER
+                    textSize = size * 0.14f
+                },
+            )
         }
-        canvas.drawText(label, size / 2f, size / 2f + textPaint.textSize * 0.35f, textPaint)
 
         return bitmap
     }

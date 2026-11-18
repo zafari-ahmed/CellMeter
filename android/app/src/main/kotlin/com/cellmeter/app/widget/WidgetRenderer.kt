@@ -114,8 +114,8 @@ object WidgetRenderer {
 
     /** Ring diameter per layout. */
     private fun gaugeSizeDp(size: Size): Int = when (size) {
-        Size.COMPACT -> 34
-        Size.ROW -> 36
+        Size.COMPACT -> 44
+        Size.ROW -> 40
         Size.FULL -> 68
     }
 
@@ -127,23 +127,28 @@ object WidgetRenderer {
 
         views.setImageViewBitmap(
             R.id.widget_gauge,
-            GaugeRenderer.health(context, sizeDp = 62, healthPct = health),
+            GaugeRenderer.health(context, sizeDp = 74, healthPct = health),
         )
 
-        views.setTextViewText(
-            R.id.widget_capacity,
-            measured?.let { "${formatThousands(it)} mAh" } ?: "—",
-        )
-        views.setTextViewText(
-            R.id.widget_design,
-            when {
-                // Until a capacity has been measured, say so plainly rather
-                // than showing a ring at zero that looks like a dead battery.
-                measured == null -> context.getString(R.string.widget_health_measuring)
-                design != null -> "of ${formatThousands(design)}"
-                else -> "measured"
-            },
-        )
+        // Before the first measurement the widget says what it is waiting for
+        // rather than repeating that it has nothing. "Measuring" with no
+        // instruction leaves the user unable to help it along, and capacity
+        // is only measured during a reasonably deep charge.
+        if (measured == null) {
+            views.setTextViewText(R.id.widget_capacity, "Measuring")
+            views.setTextColor(R.id.widget_capacity, WidgetPalette.textMuted)
+            views.setTextViewText(R.id.widget_design, "Charge 20% in one go")
+        } else {
+            views.setTextViewText(
+                R.id.widget_capacity,
+                "${formatThousands(measured)} mAh",
+            )
+            views.setTextColor(R.id.widget_capacity, WidgetPalette.text)
+            views.setTextViewText(
+                R.id.widget_design,
+                if (design != null) "of ${formatThousands(design)} when new" else "measured",
+            )
+        }
 
         views.setOnClickPendingIntent(android.R.id.background, openApp(context))
         return views
