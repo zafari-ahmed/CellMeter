@@ -21,6 +21,7 @@ Everything stays on the device. The release build has no `INTERNET` permission.
 | **History** | 24-hour level chart, per-session records with level span, charge moved, temperature and drain rates |
 | **Apps** | Battery attributed across apps by foreground time, with the unattributed remainder shown rather than hidden |
 | **Alerts** | Charge limit alarm, high-drain alert, low battery, high temperature — all evaluated natively so they fire with no Dart engine running |
+| **Widgets** | A resizable battery widget (2×1 to 4×2) and a 2×2 health widget, in fixed brand colours, driven by the sampler rather than Android's 30-minute refresh floor |
 
 ---
 
@@ -122,6 +123,48 @@ kill mid-write costs at most the final partial line, which the reader skips.
 
 ---
 
+## Home screen widgets
+
+Two entries in the widget picker: a resizable **battery** widget (2×1 compact,
+4×1 row, 4×2 full panel — one provider picking its layout from the cell size the
+launcher gave it) and a fixed 2×2 **health** widget.
+
+**Nothing is ever placed automatically.** Android does not permit an app to put a
+widget on the home screen by itself, which is a platform guarantee rather than a
+limitation here. The user adds one from the launcher's widget picker, or through
+the "Add to home screen" buttons in Settings, which call
+`requestPinAppWidget()` — that opens the *system's* own confirmation dialog with
+a preview. On launchers that do not implement pinning, the app falls back to
+showing how to add it from the picker.
+
+**Colours are fixed.** The widgets deliberately do not follow the app's
+light/dark/AMOLED setting and do not opt into Material You wallpaper tinting.
+Colour is load bearing — green is healthy or charging, yellow is the user's
+charge limit, the severity ramp drives temperature — and a widget recoloured to
+someone's wallpaper would stay legible while ceasing to mean anything.
+
+**They stay live.** Android's `updatePeriodMillis` has a 30-minute floor, which
+is useless for a battery readout. Because CellMeter already runs a sampler,
+widgets are pushed from it whenever a reading changes meaningfully — roughly
+10–60 seconds depending on charging state, at no extra battery cost. An app
+without a running service cannot do this. The declared 30-minute period remains
+only as a safety net for when the service has been killed and not yet restarted.
+
+The 4×2 panel carries a `Chronometer` counting up from the last push rather than
+a static "updated now". If the sampler is ever suspended, the staleness becomes
+visible instead of an old reading sitting there looking current.
+
+The widget's fourth column counts down to the user's **charge limit**, not to
+100%, whenever one is set — a widget sitting next to a setting that says "stop at
+80%" should not answer a question they deliberately stopped asking.
+
+Health and the runtime forecast are the output of the Dart analytics, which the
+widget cannot run. Flutter mirrors those few figures into
+`WidgetDataStore` whenever it recomputes them, so the widget can render with no
+Dart engine alive.
+
+---
+
 ## Architecture
 
 ```
@@ -156,6 +199,15 @@ android/app/src/main/kotlin/com/cellmeter/app/
 │   ├── AlertEvaluator.kt          Alert rules, debounced by state
 │   ├── MonitorSettings.kt         Native mirror of user settings
 │   └── Notifications.kt
+├── widget/
+│   ├── BatteryWidgetProvider.kt   Resizable 2×1–4×2, layout by cell size
+│   ├── HealthWidgetProvider.kt    Fixed 2×2
+│   ├── WidgetRenderer.kt          RemoteViews for every size
+│   ├── GaugeRenderer.kt           Arcs painted to bitmaps
+│   ├── WidgetUpdater.kt           Pushed from the sampler, rate limited
+│   ├── WidgetDataStore.kt         Analytics figures mirrored from Dart
+│   ├── WidgetPalette.kt           Fixed brand colours
+│   └── WidgetPinner.kt            The system add-widget dialog
 └── MainActivity.kt                The only bridge
 ```
 

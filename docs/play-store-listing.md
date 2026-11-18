@@ -52,6 +52,14 @@ today — not what the manufacturer claimed when it was new.
 • Drain rate while each app is open
 • Standby and background consumption shown separately, never hidden
 
+🏠 HOME SCREEN WIDGETS
+
+• Battery widget, resizable from a compact readout to a full panel
+• Health widget showing measured capacity at a glance
+• Updates in seconds, not every half hour, because CellMeter is already measuring
+• Shows how long ago it last updated, so a stale reading is never mistaken for a
+  current one
+
 🔔 ALERTS
 
 • Charge alarm — get told to unplug at your chosen limit
@@ -132,6 +140,7 @@ Expect to repeat that reasoning in the Play Console form.
 | 5 | History | Every charge and discharge, in detail |
 | 6 | Apps | Where your battery actually went |
 | 7 | Settings, charge alarm | Charge to 80% and make your battery last longer |
+| 8 | Home screen with widgets | Your battery at a glance, without opening the app |
 
 Feature graphic: 1024×500, deep navy (#101B2D) background, electric green (#39E75F)
 battery-and-magnifier mark, wordmark plus "Monitor. Analyze. Optimize."
