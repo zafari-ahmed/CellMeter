@@ -119,7 +119,12 @@ class SyncController extends AsyncNotifier<SyncResult> {
     try {
       final result = await repository.sync();
       state = AsyncValue.data(result);
-      if (result.ingested > 0) _invalidateDerived();
+      // Refreshed after every sync, not only when new samples arrived.
+      // Gating on `ingested > 0` meant a pull-to-refresh with nothing to
+      // ingest did nothing at all, and a screen that had computed an empty
+      // result earlier — Apps before the first discharge, say — kept serving
+      // it from cache long after the data existed.
+      _invalidateDerived();
     } catch (error, stack) {
       state = AsyncValue.error(error, stack);
     }

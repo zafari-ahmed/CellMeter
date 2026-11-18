@@ -2,11 +2,10 @@
 <!--
   4x2 — the full panel, and the one that justifies installing the app.
 
-  The sparkline is the point. A stock battery widget can tell you the level;
-  only one backed by a sampler can show you the shape of the last six hours,
-  so you can see at a glance whether the battery is falling off a cliff or
-  coasting. Everything else on this layout supports that: level and state
-  above it, the live electrical figures below.
+  The ring carries the level and state; the sparkline underneath shows the
+  shape of the last few hours. That second part is the whole point: a stock
+  battery widget can tell you the level, but only one backed by a sampler can
+  show you whether the battery is falling off a cliff or coasting.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@android:id/background"
@@ -23,120 +22,83 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="bottom"
+        android:gravity="center_vertical"
         android:baselineAligned="false">
 
-        <TextView
-            android:id="@+id/widget_level"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/widget_placeholder_level"
-            android:textColor="@color/widget_text"
-            android:textSize="38sp"
-            android:textStyle="bold"
-            android:includeFontPadding="false"
-            android:maxLines="1" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/widget_percent"
-            android:textColor="@color/widget_text_muted"
-            android:textSize="15sp"
-            android:includeFontPadding="false"
-            android:layout_marginStart="2dp"
-            android:layout_marginBottom="3dp" />
+        <ImageView
+            android:id="@+id/widget_gauge"
+            android:layout_width="68dp"
+            android:layout_height="68dp"
+            android:layout_marginEnd="16dp"
+            android:contentDescription="@string/widget_gauge_a11y" />
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="end"
-            android:layout_marginStart="12dp"
-            android:layout_marginBottom="2dp">
+            android:orientation="vertical">
 
             <TextView
-                android:id="@+id/widget_status"
-                android:layout_width="wrap_content"
+                android:id="@+id/widget_current"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/widget_placeholder_dash"
                 android:textColor="@color/widget_primary"
-                android:textSize="13sp"
+                android:textSize="19sp"
+                android:textStyle="bold"
                 android:includeFontPadding="false"
-                android:maxLines="1"
-                android:ellipsize="end" />
+                android:maxLines="1" />
 
             <TextView
                 android:id="@+id/widget_forecast"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/widget_placeholder_dash"
                 android:textColor="@color/widget_accent"
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:includeFontPadding="false"
-                android:layout_marginTop="2dp"
-                android:maxLines="1" />
+                android:layout_marginTop="4dp"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="4dp">
+
+                <TextView
+                    android:id="@+id/widget_temperature"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/widget_placeholder_dash"
+                    android:textColor="@color/widget_text_muted"
+                    android:textSize="12sp"
+                    android:includeFontPadding="false"
+                    android:maxLines="1" />
+
+                <TextView
+                    android:id="@+id/widget_health"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/widget_health_measuring"
+                    android:textColor="@color/widget_text_muted"
+                    android:textSize="12sp"
+                    android:includeFontPadding="false"
+                    android:layout_marginStart="10dp"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
-
-    <ImageView
-        android:id="@+id/widget_bar"
-        android:layout_width="match_parent"
-        android:layout_height="8dp"
-        android:layout_marginTop="9dp"
-        android:scaleType="fitXY"
-        android:contentDescription="@string/widget_gauge_a11y" />
 
     <ImageView
         android:id="@+id/widget_sparkline"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="10dp"
         android:scaleType="fitXY"
         android:contentDescription="@string/widget_sparkline_a11y" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginTop="6dp"
-        android:baselineAligned="false">
-
-        <TextView
-            android:id="@+id/widget_current"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/widget_placeholder_dash"
-            android:textColor="@color/widget_primary"
-            android:textSize="13sp"
-            android:includeFontPadding="false"
-            android:maxLines="1" />
-
-        <TextView
-            android:id="@+id/widget_temperature"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/widget_placeholder_dash"
-            android:textColor="@color/widget_text_muted"
-            android:textSize="13sp"
-            android:includeFontPadding="false"
-            android:layout_marginStart="10dp"
-            android:maxLines="1" />
-
-        <TextView
-            android:id="@+id/widget_health"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/widget_health_measuring"
-            android:textColor="@color/widget_text_muted"
-            android:textSize="12sp"
-            android:includeFontPadding="false"
-            android:layout_marginStart="10dp"
-            android:maxLines="1"
-            android:ellipsize="end" />
-    </LinearLayout>
 </LinearLayout>

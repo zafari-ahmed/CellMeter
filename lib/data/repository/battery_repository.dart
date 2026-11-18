@@ -376,6 +376,7 @@ class BatteryRepository {
         unattributedPct: 0,
         hasAccess: false,
         hasDischargeData: false,
+        isAttributed: false,
       );
     }
 
@@ -394,15 +395,6 @@ class BatteryRepository {
     final live = await _openDischargeSession();
     if (live != null) discharges.add(live);
 
-    if (discharges.isEmpty) {
-      return const AppUsageReport(
-        apps: [],
-        unattributedPct: 0,
-        hasAccess: true,
-        hasDischargeData: false,
-      );
-    }
-
     final perSession = <List<AppConsumption>>[];
     for (final session in discharges) {
       final slices = await _channel.foregroundSlices(
@@ -416,14 +408,39 @@ class BatteryRepository {
     }
 
     final merged = _attributor.merge(perSession);
+    if (merged.isNotEmpty) {
+      return AppUsageReport(
+        apps: merged,
+        unattributedPct: _attributor.unattributedPct(
+          sessions: discharges,
+          attributed: merged,
+        ),
+        hasAccess: true,
+        hasDischargeData: true,
+        isAttributed: true,
+      );
+    }
+
+    // Nothing could be attributed — the only discharges were short, or spent
+    // with the screen off. Rather than show an empty screen, fall back to
+    // plain foreground time across the whole window.
+    //
+    // This is a weaker claim and the UI says so, but it is the honest one: a
+    // phone that is plugged in most of the day has almost no discharge to
+    // divide up, and "here is what you actually used" is far more use than
+    // "come back later". It also degrades the right way — as soon as there is
+    // a real discharge to measure, the stronger attribution takes over.
+    final slices = await _channel.foregroundSlices(
+      start: since,
+      end: DateTime.now(),
+    );
+
     return AppUsageReport(
-      apps: merged,
-      unattributedPct: _attributor.unattributedPct(
-        sessions: discharges,
-        attributed: merged,
-      ),
+      apps: _attributor.fromForegroundOnly(slices),
+      unattributedPct: 0,
       hasAccess: true,
-      hasDischargeData: true,
+      hasDischargeData: discharges.isNotEmpty,
+      isAttributed: false,
     );
   }
 
@@ -628,6 +645,7 @@ class AppUsageReport {
     required this.unattributedPct,
     required this.hasAccess,
     required this.hasDischargeData,
+    required this.isAttributed,
   });
 
   final List<AppConsumption> apps;
@@ -644,6 +662,10 @@ class AppUsageReport {
   /// in the whole time" apart from "you used the phone but no single app
   /// accounts for it", which call for completely different explanations.
   final bool hasDischargeData;
+
+  /// Whether the figures are measured battery attribution, or only foreground
+  /// time. The screen must say which, because they are very different claims.
+  final bool isAttributed;
 
   bool get isEmpty => apps.isEmpty;
 }

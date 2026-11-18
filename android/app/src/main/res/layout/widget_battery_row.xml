@@ -2,94 +2,117 @@
 <!--
   4x1 — one row across the home screen.
 
-  Level and state on the left, the three figures people actually check on the
-  right, and the battery silhouette spanning the full width underneath so the
-  widget still reads as a battery at arm's length.
+  Ring and level on the left, then the three figures people actually check.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@android:id/background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
+    android:orientation="horizontal"
     android:gravity="center_vertical"
     android:background="@drawable/widget_background"
-    android:paddingStart="16dp"
+    android:paddingStart="14dp"
     android:paddingEnd="16dp"
-    android:paddingTop="10dp"
-    android:paddingBottom="10dp">
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
+    android:baselineAligned="false">
+
+    <ImageView
+        android:id="@+id/widget_gauge"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_marginEnd="12dp"
+        android:contentDescription="@string/widget_gauge_a11y" />
 
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="bottom"
-        android:baselineAligned="false">
+        android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/widget_level"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/widget_placeholder_level"
-            android:textColor="@color/widget_text"
-            android:textSize="28sp"
-            android:textStyle="bold"
+            android:orientation="horizontal"
+            android:gravity="bottom"
+            android:baselineAligned="false">
+
+            <TextView
+                android:id="@+id/widget_level"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_placeholder_level"
+                android:textColor="@color/widget_text"
+                android:textSize="25sp"
+                android:textStyle="bold"
+                android:includeFontPadding="false"
+                android:maxLines="1" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_percent"
+                android:textColor="@color/widget_text_muted"
+                android:textSize="12sp"
+                android:includeFontPadding="false"
+                android:layout_marginStart="1dp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/widget_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/widget_placeholder_dash"
+            android:textColor="@color/widget_primary"
+            android:textSize="11sp"
             android:includeFontPadding="false"
+            android:layout_marginTop="2dp"
             android:maxLines="1" />
+    </LinearLayout>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/widget_percent"
-            android:textColor="@color/widget_text_muted"
-            android:textSize="13sp"
-            android:includeFontPadding="false"
-            android:layout_marginStart="1dp"
-            android:layout_marginBottom="2dp" />
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="end"
+        android:layout_marginStart="12dp">
 
         <TextView
             android:id="@+id/widget_current"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="end"
             android:text="@string/widget_placeholder_dash"
             android:textColor="@color/widget_primary"
             android:textSize="14sp"
             android:includeFontPadding="false"
-            android:layout_marginStart="10dp"
-            android:layout_marginBottom="2dp"
             android:maxLines="1" />
 
-        <TextView
-            android:id="@+id/widget_temperature"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/widget_placeholder_dash"
-            android:textColor="@color/widget_text_muted"
-            android:textSize="13sp"
-            android:includeFontPadding="false"
-            android:layout_marginStart="10dp"
-            android:layout_marginBottom="2dp"
-            android:maxLines="1" />
+            android:orientation="horizontal"
+            android:layout_marginTop="3dp">
 
-        <TextView
-            android:id="@+id/widget_forecast"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/widget_placeholder_dash"
-            android:textColor="@color/widget_accent"
-            android:textSize="13sp"
-            android:includeFontPadding="false"
-            android:layout_marginStart="10dp"
-            android:layout_marginBottom="2dp"
-            android:maxLines="1" />
+            <TextView
+                android:id="@+id/widget_temperature"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_placeholder_dash"
+                android:textColor="@color/widget_text_muted"
+                android:textSize="11sp"
+                android:includeFontPadding="false"
+                android:maxLines="1" />
+
+            <TextView
+                android:id="@+id/widget_forecast"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_placeholder_dash"
+                android:textColor="@color/widget_accent"
+                android:textSize="11sp"
+                android:includeFontPadding="false"
+                android:layout_marginStart="8dp"
+                android:maxLines="1" />
+        </LinearLayout>
     </LinearLayout>
-
-    <ImageView
-        android:id="@+id/widget_bar"
-        android:layout_width="match_parent"
-        android:layout_height="8dp"
-        android:layout_marginTop="8dp"
-        android:scaleType="fitXY"
-        android:contentDescription="@string/widget_gauge_a11y" />
 </LinearLayout>

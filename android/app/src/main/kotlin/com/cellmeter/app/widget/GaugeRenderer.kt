@@ -38,6 +38,7 @@ object GaugeRenderer {
         isCharging: Boolean,
         chargeLimitPct: Int?,
         statusLabel: String?,
+        showValue: Boolean = true,
     ): Bitmap {
         val size = dpToPx(context, sizeDp)
         val bitmap = createBitmap(size)
@@ -78,7 +79,10 @@ object GaugeRenderer {
             drawLimitTick(canvas, rect, stroke, chargeLimitPct / 100f)
         }
 
-        drawLevelText(canvas, size, levelPct, statusLabel, arcColor)
+        // On the small sizes the arc is an indicator beside a large number,
+        // not a dial with a number in it: at 32dp the text would be six
+        // points tall and unreadable.
+        if (showValue) drawLevelText(canvas, size, levelPct, statusLabel, arcColor)
         return bitmap
     }
 

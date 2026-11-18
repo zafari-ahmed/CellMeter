@@ -65,17 +65,20 @@ object WidgetRenderer {
             if (charging) WidgetPalette.primary else WidgetPalette.info,
         )
 
-        // The battery silhouette is on every size. It is what makes the widget
-        // legible as a battery at a glance, before any text is read.
+        // The ring is the app's signature element, so the widget reads as
+        // CellMeter rather than as a generic card of numbers. On the small
+        // sizes it sits beside a large figure and carries no text of its own:
+        // a value inside a 34dp ring would be six points tall.
         views.setImageViewBitmap(
-            R.id.widget_bar,
-            WidgetArt.batteryBar(
+            R.id.widget_gauge,
+            GaugeRenderer.level(
                 context = context,
-                widthDp = barWidthDp(size),
-                heightDp = 8,
+                sizeDp = gaugeSizeDp(size),
                 levelPct = level,
                 isCharging = charging,
                 chargeLimitPct = limit,
+                statusLabel = if (size == Size.FULL) statusLabel(snapshot) else null,
+                showValue = size == Size.FULL,
             ),
         )
 
@@ -84,19 +87,22 @@ object WidgetRenderer {
             applyForecast(views, store, settings, charging, level)
         }
 
-        if (size == Size.FULL) {
+        if (size == Size.ROW) {
             views.setTextViewText(R.id.widget_status, statusLabel(snapshot) ?: "")
             views.setTextColor(
                 R.id.widget_status,
                 if (charging) WidgetPalette.primary else WidgetPalette.textMuted,
             )
+        }
+
+        if (size == Size.FULL) {
             views.setTextViewText(R.id.widget_health, healthLabel(store))
             views.setImageViewBitmap(
                 R.id.widget_sparkline,
                 WidgetArt.sparkline(
                     context = context,
-                    widthDp = 226,
-                    heightDp = 34,
+                    widthDp = 218,
+                    heightDp = 30,
                     points = WidgetHistory(context).read(),
                 ),
             )
@@ -106,17 +112,11 @@ object WidgetRenderer {
         return views
     }
 
-    /**
-     * Width the battery silhouette is rendered at.
-     *
-     * The ImageView scales with fitXY, so this only sets the bitmap's
-     * resolution; it is matched to each layout so the rounded ends stay crisp
-     * rather than being stretched from a narrow bitmap.
-     */
-    private fun barWidthDp(size: Size): Int = when (size) {
-        Size.COMPACT -> 86
-        Size.ROW -> 218
-        Size.FULL -> 218
+    /** Ring diameter per layout. */
+    private fun gaugeSizeDp(size: Size): Int = when (size) {
+        Size.COMPACT -> 34
+        Size.ROW -> 36
+        Size.FULL -> 68
     }
 
     fun health(context: Context, store: WidgetDataStore): RemoteViews {

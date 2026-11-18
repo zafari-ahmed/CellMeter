@@ -26,6 +26,13 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
+        <!-- A home-screen launcher is not itself launchable, so it does not
+             match the query above and its name came out as a raw package
+             name in the usage breakdown. -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.HOME" />
+        </intent>
     </queries>
 
     <application

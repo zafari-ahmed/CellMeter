@@ -77,6 +77,70 @@ class _Breakdown extends ConsumerWidget {
       );
     }
 
+    // Without a discharge to divide up, the figures are foreground time and
+    // nothing more. Saying so plainly is the difference between a weaker
+    // claim and a false one.
+    if (!report.isAttributed) {
+      return ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppColors.accent.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: AppColors.accent.withValues(alpha: 0.3),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.info_outline_rounded,
+                    size: 18, color: AppColors.accent),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    report.hasDischargeData
+                        ? 'Your phone has barely run on battery yet, so there '
+                            'is nothing to divide up. This is screen time '
+                            'only — battery figures appear once CellMeter has '
+                            'watched a longer discharge.'
+                        : 'Your phone has been charging the whole time, so '
+                            'there is no battery use to attribute. This is '
+                            'screen time only.',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SectionHeader(
+            title: 'Time on screen',
+            subtitle: 'Last 24 hours',
+          ),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: RankedBarList(
+                entries: report.apps
+                    .map((app) => RankedBarEntry(
+                          label: app.label,
+                          value: app.foreground.inSeconds.toDouble(),
+                          valueLabel: Units.duration(app.foreground),
+                        ))
+                    .toList(),
+                maxEntries: 12,
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          _MethodNote(),
+        ],
+      );
+    }
+
     final total = report.apps.fold<double>(
       0,
       (sum, app) => sum + (app.attributedPct ?? 0),
@@ -143,8 +207,7 @@ class _Breakdown extends ConsumerWidget {
                           app.attributedPct,
                           decimals: 1,
                         ),
-                        caption: _caption(app.foreground, app.pctPerHour,
-                            app.attributedMah),
+                        caption: _caption(app.foreground, app.attributedMah),
                       ))
                   .toList(),
                 maxEntries: 12,
@@ -175,10 +238,9 @@ class _Breakdown extends ConsumerWidget {
     );
   }
 
-  String _caption(Duration foreground, double? rate, double? mah) {
-    final parts = <String>[Units.duration(foreground)];
+  String _caption(Duration foreground, double? mah) {
+    final parts = <String>['${Units.duration(foreground)} on screen'];
     if (mah != null) parts.add(Units.mah(mah));
-    if (rate != null) parts.add('${Units.percentPerHour(rate)} while open');
     return parts.join(' · ');
   }
 }

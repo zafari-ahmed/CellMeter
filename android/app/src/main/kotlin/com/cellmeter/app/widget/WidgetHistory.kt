@@ -27,11 +27,17 @@ class WidgetHistory(context: Context) {
     data class Point(val timestampMs: Long, val levelPct: Double, val charging: Boolean)
 
     /**
-     * Appends a reading, keeping at most [MAX_POINTS].
+     * Records a reading, keeping at most [MAX_POINTS].
      *
-     * Points closer together than [MIN_SPACING_MS] are skipped: while charging
-     * the sampler runs every 10 seconds, and at that rate the buffer would
-     * cover twelve minutes instead of several hours.
+     * A point is kept when the level or charging state changes, and otherwise
+     * at most once per [MIN_SPACING_MS] so a flat battery does not fill the
+     * buffer with identical values.
+     *
+     * The obvious version of this — "if it is too soon, overwrite the last
+     * point instead" — is wrong, and was the first implementation: overwriting
+     * also moves the last point's timestamp to now, so the spacing clock
+     * restarts on every sample and the buffer can never reach two points. The
+     * sampler runs every ten seconds while charging, so it never did.
      */
     fun append(timestampMs: Long, levelPct: Double?, charging: Boolean) {
         if (levelPct == null) return
@@ -40,16 +46,8 @@ class WidgetHistory(context: Context) {
         val last = points.lastOrNull()
 
         if (last != null) {
-            if (timestampMs - last.timestampMs < MIN_SPACING_MS) {
-                // Too soon to add a point, but a level change is worth
-                // recording immediately, so replace the most recent instead
-                // of losing the transition.
-                if (last.levelPct == levelPct && last.charging == charging) return
-                points[points.size - 1] =
-                    Point(timestampMs, levelPct, charging)
-                write(points)
-                return
-            }
+            val unchanged = last.levelPct == levelPct && last.charging == charging
+            if (unchanged && timestampMs - last.timestampMs < MIN_SPACING_MS) return
         }
 
         points.add(Point(timestampMs, levelPct, charging))

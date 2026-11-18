@@ -28,15 +28,17 @@ class AppConsumption {
   /// This app's share of all measured foreground time, 0..1.
   final double shareOfForeground;
 
-  /// Drain rate while this app was in front, percentage points per hour.
-  /// This is the comparable figure: total consumption just says what the user
-  /// used most, while the rate says what is actually expensive to run.
-  double? get pctPerHour {
-    final pct = attributedPct;
-    final hours = foreground.inMilliseconds / 3600000;
-    if (pct == null || hours <= 0) return null;
-    return pct / hours;
-  }
+  // There is deliberately no per-app drain rate here.
+  //
+  // It looks like the most useful figure on the screen — "what is expensive
+  // to run" rather than "what you used most" — and an earlier version showed
+  // it. But attribution is proportional to foreground time, so the rate works
+  // out to total drop over total foreground time: the same value for every
+  // app, every time. It rendered as an identical "34.1%/h" on every row,
+  // which is not a weak signal but no signal at all.
+  //
+  // Measuring it properly needs per-app energy, which Android does not
+  // expose. Until it does, this stays absent rather than fabricated.
 }
 
 /// Divides measured battery consumption across apps by foreground time.
@@ -67,7 +69,7 @@ class AppConsumption {
 /// app can tell whose wakelock did it. Inventing a split would be worse than
 /// leaving it in the unattributed remainder, where it is at least visible.
 class AppAttributor {
-  const AppAttributor({this.minForeground = const Duration(seconds: 30)});
+  const AppAttributor({this.minForeground = const Duration(seconds: 10)});
 
   /// Slices shorter than this are app switches, not usage worth listing.
   final Duration minForeground;
@@ -161,6 +163,32 @@ class AppAttributor {
           (b.attributedPct ?? 0).compareTo(a.attributedPct ?? 0));
 
     return merged;
+  }
+
+  /// Ranks apps by foreground time alone, with no battery figures.
+  ///
+  /// Used when there is no discharge to divide up. It makes no claim about
+  /// energy, which is why [AppConsumption.attributedMah] and
+  /// [AppConsumption.attributedPct] are left null rather than zeroed — a zero
+  /// would read as "this app used no battery", which is not what is known.
+  List<AppConsumption> fromForegroundOnly(List<ForegroundSlice> slices) {
+    final relevant = slices
+        .where((s) => s.foregroundMs >= minForeground.inMilliseconds)
+        .toList();
+    if (relevant.isEmpty) return const [];
+
+    final total = relevant.fold<int>(0, (sum, s) => sum + s.foregroundMs);
+
+    return relevant
+        .map((slice) => AppConsumption(
+              packageName: slice.packageName,
+              label: slice.label,
+              foreground: slice.foreground,
+              isSystemApp: slice.isSystemApp,
+              shareOfForeground: total > 0 ? slice.foregroundMs / total : 0,
+            ))
+        .toList()
+      ..sort((a, b) => b.foreground.compareTo(a.foreground));
   }
 
   /// Battery percentage that no foreground app accounts for.

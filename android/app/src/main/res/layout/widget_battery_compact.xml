@@ -1,72 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  2x1 — roughly 110x40dp of usable space, which is very little.
+  2x1 — roughly 110x40dp of usable space.
 
-  So it carries exactly two things: the level, and what the battery is doing
-  right now. The battery silhouette underneath makes the widget readable as a
-  battery before any text is, which matters on a home screen full of other
-  cards.
+  The ring is the app's signature element, so the widget reads as CellMeter at
+  a glance and not as a generic text card. At this size it carries no text of
+  its own: a number inside a 32dp ring would be six points tall.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@android:id/background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
+    android:orientation="horizontal"
     android:gravity="center_vertical"
     android:background="@drawable/widget_background"
     android:paddingStart="12dp"
     android:paddingEnd="12dp"
-    android:paddingTop="9dp"
-    android:paddingBottom="9dp">
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
+    android:baselineAligned="false">
+
+    <ImageView
+        android:id="@+id/widget_gauge"
+        android:layout_width="34dp"
+        android:layout_height="34dp"
+        android:layout_marginEnd="11dp"
+        android:contentDescription="@string/widget_gauge_a11y" />
 
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="bottom"
-        android:baselineAligned="false">
+        android:layout_weight="1"
+        android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/widget_level"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/widget_placeholder_level"
-            android:textColor="@color/widget_text"
-            android:textSize="26sp"
-            android:textStyle="bold"
-            android:includeFontPadding="false"
-            android:maxLines="1" />
+            android:orientation="horizontal"
+            android:gravity="bottom"
+            android:baselineAligned="false">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/widget_percent"
-            android:textColor="@color/widget_text_muted"
-            android:textSize="12sp"
-            android:includeFontPadding="false"
-            android:layout_marginStart="1dp"
-            android:layout_marginBottom="2dp" />
+            <TextView
+                android:id="@+id/widget_level"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_placeholder_level"
+                android:textColor="@color/widget_text"
+                android:textSize="23sp"
+                android:textStyle="bold"
+                android:includeFontPadding="false"
+                android:maxLines="1" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_percent"
+                android:textColor="@color/widget_text_muted"
+                android:textSize="11sp"
+                android:includeFontPadding="false"
+                android:layout_marginStart="1dp" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/widget_current"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="end"
             android:text="@string/widget_placeholder_dash"
             android:textColor="@color/widget_primary"
-            android:textSize="12sp"
+            android:textSize="11sp"
             android:includeFontPadding="false"
-            android:layout_marginBottom="2dp"
+            android:layout_marginTop="3dp"
             android:maxLines="1"
             android:ellipsize="end" />
     </LinearLayout>
-
-    <ImageView
-        android:id="@+id/widget_bar"
-        android:layout_width="match_parent"
-        android:layout_height="7dp"
-        android:layout_marginTop="6dp"
-        android:scaleType="fitXY"
-        android:contentDescription="@string/widget_gauge_a11y" />
 </LinearLayout>

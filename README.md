@@ -93,6 +93,16 @@ Background work is deliberately **not** attributed: nothing available to a norma
 app can tell whose wakelock drained the battery. It stays in the visible
 "standby and background" remainder. The Apps screen says all of this on screen.
 
+There is deliberately **no per-app drain rate**, which looks like it should be
+the most useful figure there. Because attribution is proportional to foreground
+time, the rate reduces to total drop over total foreground time — the same
+number for every app, every time. An earlier version shipped it and rendered an
+identical "34.1%/h" on every row.
+
+When there is no discharge to divide up — a phone that has been plugged in all
+day — the screen falls back to plain foreground time and says so, rather than
+showing nothing.
+
 ---
 
 ## Why a native foreground service
@@ -143,6 +153,11 @@ Colour is load bearing — green is healthy or charging, yellow is the user's
 charge limit, the severity ramp drives temperature — and a widget recoloured to
 someone's wallpaper would stay legible while ceasing to mean anything.
 
+Every size is built around the same ring gauge the app uses, so a widget reads
+as CellMeter rather than as a generic card of numbers. On the small sizes the
+ring carries no text of its own: a value inside a 34dp ring would be six points
+tall.
+
 **The 4×2 panel carries a sparkline** of the last six hours, with charging
 stretches drawn green and discharging blue, so the rhythm of a day — a long
 slow fall, a sharp climb — is readable without a legend or an axis. This is the
@@ -152,10 +167,6 @@ it only exists because the sampler is already running. The scale is fixed at
 2% dip look identical to a 60% drain. The points come from a small native ring
 buffer (`WidgetHistory`), fed by the sampler whether or not a widget is placed,
 so the trace is already there the moment one is added.
-
-Every size also carries a battery silhouette that fills, which is what makes
-the widget legible as a battery at a glance on a home screen full of other
-cards, with a notch marking the charge limit.
 
 **They stay live.** Android's `updatePeriodMillis` has a 30-minute floor, which
 is useless for a battery readout. Because CellMeter already runs a sampler,
@@ -213,7 +224,7 @@ android/app/src/main/kotlin/com/cellmeter/app/
 │   ├── BatteryWidgetProvider.kt   Resizable 2×1–4×2, layout by cell size
 │   ├── HealthWidgetProvider.kt    Fixed 2×2
 │   ├── WidgetRenderer.kt          RemoteViews for every size
-│   ├── GaugeRenderer.kt           Arcs, battery silhouette, sparkline
+│   ├── GaugeRenderer.kt           Ring gauges and the sparkline
 │   ├── WidgetHistory.kt           Ring buffer behind the sparkline
 │   ├── WidgetUpdater.kt           Pushed from the sampler, rate limited
 │   ├── WidgetDataStore.kt         Analytics figures mirrored from Dart
