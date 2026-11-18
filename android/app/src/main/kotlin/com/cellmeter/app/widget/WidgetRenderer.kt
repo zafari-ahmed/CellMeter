@@ -26,6 +26,7 @@ object WidgetRenderer {
     enum class Size(val layout: Int) {
         COMPACT(R.layout.widget_battery_compact),
         ROW(R.layout.widget_battery_row),
+        SQUARE(R.layout.widget_battery_square),
         FULL(R.layout.widget_battery_full),
     }
 
@@ -42,6 +43,10 @@ object WidgetRenderer {
         return when {
             width >= 250 && height >= 110 -> Size.FULL
             width >= 250 -> Size.ROW
+            // Taller but still narrow. This case used to fall through to the
+            // 2x1 layout, so a widget grown downwards kept a single row of
+            // content and sat in a half-empty card.
+            height >= 110 -> Size.SQUARE
             else -> Size.COMPACT
         }
     }
@@ -87,6 +92,18 @@ object WidgetRenderer {
             applyForecast(views, store, settings, charging, level)
         }
 
+        if (size == Size.SQUARE) {
+            views.setImageViewBitmap(
+                R.id.widget_sparkline,
+                WidgetArt.sparkline(
+                    context = context,
+                    widthDp = 90,
+                    heightDp = 30,
+                    points = WidgetHistory(context).read(),
+                ),
+            )
+        }
+
         if (size == Size.ROW) {
             views.setTextViewText(R.id.widget_status, statusLabel(snapshot) ?: "")
             views.setTextColor(
@@ -116,6 +133,7 @@ object WidgetRenderer {
     private fun gaugeSizeDp(size: Size): Int = when (size) {
         Size.COMPACT -> 44
         Size.ROW -> 40
+        Size.SQUARE -> 44
         Size.FULL -> 68
     }
 
@@ -175,14 +193,12 @@ object WidgetRenderer {
         }
     }
 
+    // Kept short deliberately: this sits in a shared row beside the
+    // temperature, and the longer wording was being ellipsised away to
+    // "Health — still measuri…".
     private fun healthLabel(store: WidgetDataStore): String {
-        val health = store.healthPct ?: return "Health — still measuring"
-        val measured = store.measuredMah
-        return if (measured != null) {
-            "Health ${health.roundToInt()}% · ${formatThousands(measured)} mAh"
-        } else {
-            "Health ${health.roundToInt()}%"
-        }
+        val health = store.healthPct ?: return "Measuring health"
+        return "Health ${health.roundToInt()}%"
     }
 
     private fun statusLabel(snapshot: BatterySnapshot?): String? = when {
