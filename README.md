@@ -143,16 +143,26 @@ Colour is load bearing — green is healthy or charging, yellow is the user's
 charge limit, the severity ramp drives temperature — and a widget recoloured to
 someone's wallpaper would stay legible while ceasing to mean anything.
 
+**The 4×2 panel carries a sparkline** of the last six hours, with charging
+stretches drawn green and discharging blue, so the rhythm of a day — a long
+slow fall, a sharp climb — is readable without a legend or an axis. This is the
+one thing a CellMeter widget can show that a stock battery widget cannot, and
+it only exists because the sampler is already running. The scale is fixed at
+0–100% rather than fitted to the data: a sparkline that rescaled would make a
+2% dip look identical to a 60% drain. The points come from a small native ring
+buffer (`WidgetHistory`), fed by the sampler whether or not a widget is placed,
+so the trace is already there the moment one is added.
+
+Every size also carries a battery silhouette that fills, which is what makes
+the widget legible as a battery at a glance on a home screen full of other
+cards, with a notch marking the charge limit.
+
 **They stay live.** Android's `updatePeriodMillis` has a 30-minute floor, which
 is useless for a battery readout. Because CellMeter already runs a sampler,
 widgets are pushed from it whenever a reading changes meaningfully — roughly
 10–60 seconds depending on charging state, at no extra battery cost. An app
 without a running service cannot do this. The declared 30-minute period remains
 only as a safety net for when the service has been killed and not yet restarted.
-
-The 4×2 panel carries a `Chronometer` counting up from the last push rather than
-a static "updated now". If the sampler is ever suspended, the staleness becomes
-visible instead of an old reading sitting there looking current.
 
 The widget's fourth column counts down to the user's **charge limit**, not to
 100%, whenever one is set — a widget sitting next to a setting that says "stop at
@@ -203,7 +213,8 @@ android/app/src/main/kotlin/com/cellmeter/app/
 │   ├── BatteryWidgetProvider.kt   Resizable 2×1–4×2, layout by cell size
 │   ├── HealthWidgetProvider.kt    Fixed 2×2
 │   ├── WidgetRenderer.kt          RemoteViews for every size
-│   ├── GaugeRenderer.kt           Arcs painted to bitmaps
+│   ├── GaugeRenderer.kt           Arcs, battery silhouette, sparkline
+│   ├── WidgetHistory.kt           Ring buffer behind the sparkline
 │   ├── WidgetUpdater.kt           Pushed from the sampler, rate limited
 │   ├── WidgetDataStore.kt         Analytics figures mirrored from Dart
 │   ├── WidgetPalette.kt           Fixed brand colours

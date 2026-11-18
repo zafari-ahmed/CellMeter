@@ -26,4 +26,5 @@
     <!-- Content descriptions, read aloud by screen readers -->
     <string name="widget_gauge_a11y">Battery level</string>
     <string name="widget_health_a11y">Battery health</string>
+    <string name="widget_sparkline_a11y">Battery level over the last six hours</string>
 </resources>

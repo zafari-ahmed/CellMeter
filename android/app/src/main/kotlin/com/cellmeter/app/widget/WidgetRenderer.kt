@@ -5,7 +5,6 @@ import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.os.SystemClock
 import android.widget.RemoteViews
 import com.cellmeter.app.MainActivity
 import com.cellmeter.app.R
@@ -57,6 +56,7 @@ object WidgetRenderer {
         val views = RemoteViews(context.packageName, size.layout)
         val level = snapshot?.levelPct
         val charging = snapshot?.isCharging == true
+        val limit = chargeLimit(settings)
 
         views.setTextViewText(R.id.widget_level, level?.roundToInt()?.toString() ?: "--")
         views.setTextViewText(R.id.widget_current, currentLabel(snapshot))
@@ -65,30 +65,58 @@ object WidgetRenderer {
             if (charging) WidgetPalette.primary else WidgetPalette.info,
         )
 
+        // The battery silhouette is on every size. It is what makes the widget
+        // legible as a battery at a glance, before any text is read.
+        views.setImageViewBitmap(
+            R.id.widget_bar,
+            WidgetArt.batteryBar(
+                context = context,
+                widthDp = barWidthDp(size),
+                heightDp = 8,
+                levelPct = level,
+                isCharging = charging,
+                chargeLimitPct = limit,
+            ),
+        )
+
         if (size != Size.COMPACT) {
             views.setTextViewText(R.id.widget_temperature, temperatureLabel(snapshot, store))
             applyForecast(views, store, settings, charging, level)
         }
 
         if (size == Size.FULL) {
-            views.setTextViewText(R.id.widget_power, powerLabel(snapshot))
+            views.setTextViewText(R.id.widget_status, statusLabel(snapshot) ?: "")
+            views.setTextColor(
+                R.id.widget_status,
+                if (charging) WidgetPalette.primary else WidgetPalette.textMuted,
+            )
             views.setTextViewText(R.id.widget_health, healthLabel(store))
-            applyStaleness(views)
             views.setImageViewBitmap(
-                R.id.widget_gauge,
-                GaugeRenderer.level(
+                R.id.widget_sparkline,
+                WidgetArt.sparkline(
                     context = context,
-                    sizeDp = 104,
-                    levelPct = level,
-                    isCharging = charging,
-                    chargeLimitPct = chargeLimit(settings),
-                    statusLabel = statusLabel(snapshot),
+                    widthDp = 226,
+                    heightDp = 34,
+                    points = WidgetHistory(context).read(),
                 ),
             )
         }
 
         views.setOnClickPendingIntent(android.R.id.background, openApp(context))
         return views
+    }
+
+    /**
+     * Width the battery silhouette is rendered at.
+     *
+     * The ImageView scales with fitXY, so this only sets the bitmap's
+     * resolution; it is matched to each layout so the rounded ends stay crisp
+     * rather than being stretched from a narrow bitmap.
+     */
+    private fun barWidthDp(size: Size): Int = when (size) {
+        Size.COMPACT -> 86
+        Size.ROW -> 218
+        Size.FULL -> 218
     }
 
     fun health(context: Context, store: WidgetDataStore): RemoteViews {
@@ -130,11 +158,6 @@ object WidgetRenderer {
         return "$sign${formatThousands(milliAmps)} mA"
     }
 
-    private fun powerLabel(snapshot: BatterySnapshot?): String {
-        val milliWatts = snapshot?.powerMw ?: return "—"
-        return String.format("%.2f W", abs(milliWatts) / 1000.0)
-    }
-
     private fun temperatureLabel(
         snapshot: BatterySnapshot?,
         store: WidgetDataStore,
@@ -161,16 +184,20 @@ object WidgetRenderer {
         snapshot == null -> null
         snapshot.isCharging -> "Charging"
         snapshot.screenOn -> "In use"
-        else -> null
+        else -> "Standby"
     }
 
     /**
-     * Fills the fourth column.
+     * Fills the time-remaining readout.
      *
      * While charging toward a limit the user set, this counts down to that
      * limit rather than to 100%. A widget sitting next to the setting that
      * says "stop at 80%" should not be answering a question the user
      * deliberately stopped asking.
+     *
+     * The target is folded into the text itself ("43m to 80%") rather than
+     * carried by a separate label, because at widget size a column heading
+     * costs more room than it earns.
      */
     private fun applyForecast(
         views: RemoteViews,
@@ -182,35 +209,27 @@ object WidgetRenderer {
         val minutes = store.forecastMinutes
         val limit = chargeLimit(settings)
 
-        val label = when {
-            charging && limit != null && (levelPct ?: 0.0) < limit -> "TO $limit%"
-            charging -> "TO FULL"
-            else -> "REMAINING"
-        }
-
-        views.setTextViewText(R.id.widget_forecast_label, label)
         views.setTextColor(
             R.id.widget_forecast,
-            if (charging) WidgetPalette.accent else WidgetPalette.text,
+            if (charging) WidgetPalette.accent else WidgetPalette.textMuted,
         )
 
-        // The forecast is only valid for the direction it was computed in. If
+        // A forecast is only valid for the direction it was computed in. If
         // the phone has been plugged in since Flutter last pushed, showing the
         // old discharge estimate would be worse than showing nothing.
-        val usable = minutes != null && store.forecastIsCharging == charging
-        views.setTextViewText(
-            R.id.widget_forecast,
-            if (usable) formatDuration(minutes) else "—",
-        )
-    }
+        if (minutes == null || store.forecastIsCharging != charging) {
+            views.setTextViewText(R.id.widget_forecast, "—")
+            return
+        }
 
-    private fun applyStaleness(views: RemoteViews) {
-        views.setChronometer(
-            R.id.widget_stale,
-            SystemClock.elapsedRealtime(),
-            "updated %s ago",
-            true,
-        )
+        val duration = formatDuration(minutes)
+        val text = when {
+            charging && limit != null && (levelPct ?: 0.0) < limit ->
+                "$duration to $limit%"
+            charging -> "$duration to full"
+            else -> "$duration left"
+        }
+        views.setTextViewText(R.id.widget_forecast, text)
     }
 
     private fun chargeLimit(settings: MonitorSettings): Int? =

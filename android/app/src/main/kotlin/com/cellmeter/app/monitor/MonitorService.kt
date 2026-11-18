@@ -13,6 +13,7 @@ import android.os.IBinder
 import android.util.Log
 import com.cellmeter.app.battery.BatteryReader
 import com.cellmeter.app.battery.BatterySnapshot
+import com.cellmeter.app.widget.WidgetHistory
 import com.cellmeter.app.widget.WidgetUpdater
 import kotlin.math.abs
 
@@ -42,6 +43,7 @@ class MonitorService : Service() {
     private lateinit var sink: SampleSink
     private lateinit var settings: MonitorSettings
     private lateinit var alerts: AlertEvaluator
+    private lateinit var widgetHistory: WidgetHistory
 
     private var thread: HandlerThread? = null
     private var handler: Handler? = null
@@ -81,6 +83,7 @@ class MonitorService : Service() {
         sink = SampleSink(this)
         settings = MonitorSettings(this)
         alerts = AlertEvaluator(this, settings)
+        widgetHistory = WidgetHistory(this)
 
         Notifications.ensureChannels(this)
         startForegroundCompat(Notifications.buildStatus(this, null, false))
@@ -144,6 +147,16 @@ class MonitorService : Service() {
             lastSnapshot = snapshot
             alerts.evaluate(snapshot, previous)
             updateStatusNotification(snapshot)
+
+            // Fed even when no widget is placed, so the sparkline has
+            // something to draw the moment one is added rather than starting
+            // blank for the next few hours. One small preferences write every
+            // five minutes.
+            widgetHistory.append(
+                snapshot.timestampMs,
+                snapshot.levelPct,
+                snapshot.isCharging,
+            )
 
             // Home screen widgets are driven from here rather than from
             // Android's own widget refresh, whose 30-minute floor is useless

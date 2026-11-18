@@ -1,31 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  4x1. A single row across the home screen: level, current, temperature and
-  time remaining.
+  4x1 — one row across the home screen.
 
-  The fourth column counts down to the user's charge limit when they have one
-  set, not to 100%. A widget that ignores the setting it is sitting next to
-  would be answering a question the user deliberately stopped asking.
+  Level and state on the left, the three figures people actually check on the
+  right, and the battery silhouette spanning the full width underneath so the
+  widget still reads as a battery at arm's length.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@android:id/background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="horizontal"
+    android:orientation="vertical"
     android:gravity="center_vertical"
     android:background="@drawable/widget_background"
-    android:paddingStart="18dp"
-    android:paddingEnd="18dp"
-    android:paddingTop="12dp"
-    android:paddingBottom="12dp"
-    android:baselineAligned="false">
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp">
 
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
         android:orientation="horizontal"
-        android:gravity="start|center_vertical">
+        android:gravity="bottom"
+        android:baselineAligned="false">
 
         <TextView
             android:id="@+id/widget_level"
@@ -33,8 +31,9 @@
             android:layout_height="wrap_content"
             android:text="@string/widget_placeholder_level"
             android:textColor="@color/widget_text"
-            android:textSize="24sp"
+            android:textSize="28sp"
             android:textStyle="bold"
+            android:includeFontPadding="false"
             android:maxLines="1" />
 
         <TextView
@@ -42,77 +41,35 @@
             android:layout_height="wrap_content"
             android:text="@string/widget_percent"
             android:textColor="@color/widget_text_muted"
-            android:textSize="12sp"
-            android:layout_marginStart="2dp" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:gravity="center_horizontal">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/widget_label_current"
-            android:textColor="@color/widget_text_muted"
-            android:textSize="11sp"
-            android:letterSpacing="0.05" />
+            android:textSize="13sp"
+            android:includeFontPadding="false"
+            android:layout_marginStart="1dp"
+            android:layout_marginBottom="2dp" />
 
         <TextView
             android:id="@+id/widget_current"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="end"
             android:text="@string/widget_placeholder_dash"
             android:textColor="@color/widget_primary"
             android:textSize="14sp"
-            android:layout_marginTop="2dp"
+            android:includeFontPadding="false"
+            android:layout_marginStart="10dp"
+            android:layout_marginBottom="2dp"
             android:maxLines="1" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:gravity="center_horizontal">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/widget_label_temp"
-            android:textColor="@color/widget_text_muted"
-            android:textSize="11sp"
-            android:letterSpacing="0.05" />
 
         <TextView
             android:id="@+id/widget_temperature"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/widget_placeholder_dash"
-            android:textColor="@color/widget_text"
-            android:textSize="14sp"
-            android:layout_marginTop="2dp"
-            android:maxLines="1" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:gravity="center_horizontal">
-
-        <TextView
-            android:id="@+id/widget_forecast_label"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/widget_label_remaining"
             android:textColor="@color/widget_text_muted"
-            android:textSize="11sp"
-            android:letterSpacing="0.05"
+            android:textSize="13sp"
+            android:includeFontPadding="false"
+            android:layout_marginStart="10dp"
+            android:layout_marginBottom="2dp"
             android:maxLines="1" />
 
         <TextView
@@ -121,8 +78,18 @@
             android:layout_height="wrap_content"
             android:text="@string/widget_placeholder_dash"
             android:textColor="@color/widget_accent"
-            android:textSize="14sp"
-            android:layout_marginTop="2dp"
+            android:textSize="13sp"
+            android:includeFontPadding="false"
+            android:layout_marginStart="10dp"
+            android:layout_marginBottom="2dp"
             android:maxLines="1" />
     </LinearLayout>
+
+    <ImageView
+        android:id="@+id/widget_bar"
+        android:layout_width="match_parent"
+        android:layout_height="8dp"
+        android:layout_marginTop="8dp"
+        android:scaleType="fitXY"
+        android:contentDescription="@string/widget_gauge_a11y" />
 </LinearLayout>
