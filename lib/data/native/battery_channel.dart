@@ -160,6 +160,55 @@ class BatteryChannel {
   Future<void> openNotificationSettings() =>
       _invoke<bool>('openNotificationSettings');
 
+  // ------------------------------------------------------------ app actions
+
+  /// Opens the system details page for [packageName].
+  ///
+  /// This is where Force stop and the background restriction toggle live.
+  /// CellMeter cannot do either itself: force-stopping needs a signature
+  /// permission, and the public `killBackgroundProcesses` only drops
+  /// processes the system immediately restarts, so a button for it would
+  /// appear to work and change nothing.
+  Future<bool> openAppSettings(String packageName) async =>
+      await _invoke<bool>('openAppSettings', {'package': packageName}) ?? false;
+
+  Future<bool> launchApp(String packageName) async =>
+      await _invoke<bool>('launchApp', {'package': packageName}) ?? false;
+
+  /// Asks the system to uninstall. The user confirms in the system dialog.
+  Future<bool> requestUninstall(String packageName) async =>
+      await _invoke<bool>('requestUninstall', {'package': packageName}) ?? false;
+
+  Future<AppCapabilities> appCapabilities(String packageName) async {
+    final map = await _invokeMap('appCapabilities', {'package': packageName});
+    return map == null
+        ? const AppCapabilities()
+        : AppCapabilities.fromMap(map);
+  }
+
+  /// Launcher icons as base64 PNGs, keyed by package name.
+  ///
+  /// Fetched in one call for the whole list rather than per row: each one
+  /// crosses a method-channel reply, and a dozen separate round trips while
+  /// the list is building is visible as a stutter.
+  Future<Map<String, Uint8List>> appIcons(List<String> packages) async {
+    if (packages.isEmpty) return const {};
+    final map = await _invokeMap('appIcons', {'packages': packages});
+    if (map == null) return const {};
+
+    final icons = <String, Uint8List>{};
+    map.forEach((key, value) {
+      if (key is String && value is String) {
+        try {
+          icons[key] = base64Decode(value);
+        } catch (_) {
+          // A malformed icon is not worth failing the list over.
+        }
+      }
+    });
+    return icons;
+  }
+
   // ----------------------------------------------------- home screen widgets
 
   Future<WidgetStatus> widgetStatus() async {
@@ -208,6 +257,19 @@ class BatteryChannel {
     Map<String, dynamic>? args,
   ]) =>
       _invoke<Map<dynamic, dynamic>>(method, args);
+}
+
+/// What the system will let the user do with a given app.
+class AppCapabilities {
+  const AppCapabilities({this.canUninstall = false, this.canLaunch = false});
+
+  final bool canUninstall;
+  final bool canLaunch;
+
+  static AppCapabilities fromMap(Map<dynamic, dynamic> map) => AppCapabilities(
+        canUninstall: map['canUninstall'] as bool? ?? false,
+        canLaunch: map['canLaunch'] as bool? ?? false,
+      );
 }
 
 /// Which of the two widgets an action refers to.

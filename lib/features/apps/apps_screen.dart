@@ -5,7 +5,7 @@ import '../../core/format/units.dart';
 import '../../core/state/providers.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/repository/battery_repository.dart';
-import '../../shared/widgets/charts.dart';
+import 'app_usage_list.dart';
 import '../../shared/widgets/metric_card.dart';
 
 /// Which apps the battery went to.
@@ -47,6 +47,7 @@ class _Breakdown extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final icons = ref.watch(appIconsProvider).value ?? const {};
 
     if (report.isEmpty) {
       // "Plugged in the whole time" and "used the phone but nothing to
@@ -122,16 +123,14 @@ class _Breakdown extends ConsumerWidget {
           ),
           Card(
             child: Padding(
-              padding: const EdgeInsets.all(18),
-              child: RankedBarList(
-                entries: report.apps
-                    .map((app) => RankedBarEntry(
-                          label: app.label,
-                          value: app.foreground.inSeconds.toDouble(),
-                          valueLabel: Units.duration(app.foreground),
-                        ))
-                    .toList(),
-                maxEntries: 12,
+              padding: const EdgeInsets.all(14),
+              child: AppUsageList(
+                apps: report.apps,
+                icons: icons,
+                isAttributed: false,
+                valueOf: (a) => a.foreground.inSeconds.toDouble(),
+                valueLabel: (a) => Units.duration(a.foreground),
+                captionOf: (a) => 'Tap for details and settings',
               ),
             ),
           ),
@@ -197,38 +196,14 @@ class _Breakdown extends ConsumerWidget {
         ),
         Card(
           child: Padding(
-            padding: const EdgeInsets.all(18),
-            child: RankedBarList(
-              entries: report.apps
-                  .map((app) => RankedBarEntry(
-                        label: app.label,
-                        value: app.attributedPct ?? 0,
-                        valueLabel: Units.percent(
-                          app.attributedPct,
-                          decimals: 1,
-                        ),
-                        caption: _caption(app.foreground, app.attributedMah),
-                      ))
-                  .toList(),
-                maxEntries: 12,
-            ),
-          ),
-        ),
-        const SectionHeader(title: 'By time on screen'),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(18),
-            child: RankedBarList(
-              entries: (report.apps.toList()
-                    ..sort((a, b) =>
-                        b.foreground.compareTo(a.foreground)))
-                  .map((app) => RankedBarEntry(
-                        label: app.label,
-                        value: app.foreground.inSeconds.toDouble(),
-                        valueLabel: Units.duration(app.foreground),
-                      ))
-                  .toList(),
-              maxEntries: 12,
+            padding: const EdgeInsets.all(14),
+            child: AppUsageList(
+              apps: report.apps,
+              icons: icons,
+              isAttributed: true,
+              valueOf: (a) => a.attributedPct ?? 0,
+              valueLabel: (a) => Units.percent(a.attributedPct, decimals: 1),
+              captionOf: (a) => _caption(a.foreground, a.attributedMah),
             ),
           ),
         ),

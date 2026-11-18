@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -358,6 +359,43 @@ final appPreferencesProvider =
     AsyncNotifierProvider<AppPreferencesController, AppPreferences>(
   AppPreferencesController.new,
 );
+
+// ------------------------------------------------------------ app actions
+
+/// Launcher icons for the apps currently listed, keyed by package.
+///
+/// Fetched for the whole list in one call rather than per row: each icon
+/// crosses a method-channel reply, and a dozen separate round trips while the
+/// list builds shows up as a stutter.
+final appIconsProvider = FutureProvider<Map<String, Uint8List>>((ref) async {
+  final report = await ref.watch(appUsageProvider.future);
+  if (report.apps.isEmpty) return const {};
+  return ref.watch(batteryChannelProvider).appIcons(
+        report.apps.take(20).map((a) => a.packageName).toList(),
+      );
+});
+
+/// What the system will allow for one app: whether it can be launched, and
+/// whether it can be uninstalled at all.
+final appCapabilitiesProvider =
+    FutureProvider.family<AppCapabilitiesState, String>((ref, package) async {
+  final caps = await ref.watch(batteryChannelProvider).appCapabilities(package);
+  return AppCapabilitiesState(
+    canLaunch: caps.canLaunch,
+    canUninstall: caps.canUninstall,
+  );
+});
+
+/// Riverpod-side view of [AppCapabilities].
+class AppCapabilitiesState {
+  const AppCapabilitiesState({
+    required this.canLaunch,
+    required this.canUninstall,
+  });
+
+  final bool canLaunch;
+  final bool canUninstall;
+}
 
 // ---------------------------------------------------- home screen widgets
 

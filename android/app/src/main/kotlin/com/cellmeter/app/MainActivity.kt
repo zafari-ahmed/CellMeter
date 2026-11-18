@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
+import com.cellmeter.app.battery.AppActions
 import com.cellmeter.app.battery.AppUsageReader
 import com.cellmeter.app.battery.BatteryReader
 import com.cellmeter.app.battery.DesignCapacity
@@ -32,6 +33,7 @@ class MainActivity : FlutterActivity() {
 
     private val reader by lazy { BatteryReader(applicationContext) }
     private val usage by lazy { AppUsageReader(applicationContext) }
+    private val appActions by lazy { AppActions(applicationContext) }
     private val sink by lazy { SampleSink(applicationContext) }
     private val settings by lazy { MonitorSettings(applicationContext) }
     private val widgetData by lazy { WidgetDataStore(applicationContext) }
@@ -139,6 +141,42 @@ class MainActivity : FlutterActivity() {
                 "openNotificationSettings" -> {
                     openNotificationSettings()
                     result.success(true)
+                }
+
+                // ------------------------------------------ app actions
+                //
+                // No "force stop" here. That needs a signature permission, and
+                // the one public alternative only drops processes the system
+                // restarts, so it would look like it worked and do nothing.
+                // These open the system screens that genuinely can.
+                "openAppSettings" -> result.success(
+                    appActions.openAppSettings(call.argument<String>("package") ?: "")
+                )
+
+                "launchApp" -> result.success(
+                    appActions.launchApp(call.argument<String>("package") ?: "")
+                )
+
+                "requestUninstall" -> result.success(
+                    appActions.requestUninstall(call.argument<String>("package") ?: "")
+                )
+
+                "appCapabilities" -> {
+                    val pkg = call.argument<String>("package") ?: ""
+                    result.success(
+                        mapOf(
+                            "canUninstall" to appActions.canUninstall(pkg),
+                            "canLaunch" to appActions.hasLaunchIntent(pkg),
+                        )
+                    )
+                }
+
+                "appIcons" -> {
+                    val packages = call.argument<List<String>>("packages").orEmpty()
+                    result.success(
+                        packages.associateWith { appActions.iconPng(it) }
+                            .filterValues { it != null },
+                    )
                 }
 
                 // ------------------------------------------- home widgets
