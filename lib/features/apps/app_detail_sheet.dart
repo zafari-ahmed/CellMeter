@@ -284,19 +284,12 @@ class _AppDetailSheetState extends ConsumerState<AppDetailSheet> {
     final channel = ref.read(batteryChannelProvider);
     final package = widget.app.packageName;
 
+    // No heading and no preamble about what Android does not allow. The
+    // caveat was true but read as an apology, and the button label already
+    // says exactly where it goes.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('What you can do', style: theme.textTheme.titleSmall),
-        const SizedBox(height: 4),
-        // Said plainly rather than hidden: a "Close app" button here would be
-        // theatre, and the user deserves to know where the real control is.
-        Text(
-          'Android does not let one app force-stop another. CellMeter opens '
-          'the system page where Force stop and background limits live.',
-          style: theme.textTheme.bodySmall?.copyWith(fontSize: 11.5),
-        ),
-        const SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
           child: FilledButton.icon(
