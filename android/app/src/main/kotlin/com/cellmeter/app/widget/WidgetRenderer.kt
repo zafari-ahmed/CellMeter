@@ -127,7 +127,7 @@ object WidgetRenderer {
 
         views.setImageViewBitmap(
             R.id.widget_gauge,
-            GaugeRenderer.health(context, sizeDp = 56, healthPct = health),
+            GaugeRenderer.health(context, sizeDp = 62, healthPct = health),
         )
 
         views.setTextViewText(
