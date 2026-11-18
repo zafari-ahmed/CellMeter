@@ -371,7 +371,12 @@ class BatteryRepository {
     Duration window = const Duration(days: 1),
   }) async {
     if (!await _channel.hasUsageAccess()) {
-      return const AppUsageReport(apps: [], unattributedPct: 0, hasAccess: false);
+      return const AppUsageReport(
+        apps: [],
+        unattributedPct: 0,
+        hasAccess: false,
+        hasDischargeData: false,
+      );
     }
 
     final since = DateTime.now().subtract(window);
@@ -379,8 +384,23 @@ class BatteryRepository {
         .where((s) => s.kind == SessionKind.discharge)
         .toList();
 
+    // Include the discharge that is still running.
+    //
+    // Stored sessions only ever cover completed runs, because a session that
+    // is still growing has no final totals. On its own that leaves this screen
+    // blank for the whole of a day's use until the user next plugs in — which
+    // is exactly backwards, since the moment people ask where the battery went
+    // is while it is going.
+    final live = await _openDischargeSession();
+    if (live != null) discharges.add(live);
+
     if (discharges.isEmpty) {
-      return const AppUsageReport(apps: [], unattributedPct: 0, hasAccess: true);
+      return const AppUsageReport(
+        apps: [],
+        unattributedPct: 0,
+        hasAccess: true,
+        hasDischargeData: false,
+      );
     }
 
     final perSession = <List<AppConsumption>>[];
@@ -403,7 +423,25 @@ class BatteryRepository {
         attributed: merged,
       ),
       hasAccess: true,
+      hasDischargeData: true,
     );
+  }
+
+  /// The discharge in progress, or null if the device is charging.
+  ///
+  /// Derived from the raw samples with an open-ended segment rather than read
+  /// from the sessions table, which by design holds only finished runs.
+  Future<SegmentedSession?> _openDischargeSession() async {
+    final samples = await recentSamples(window: const Duration(hours: 12));
+    if (samples.length < 2) return null;
+
+    final sessions = _segmenter.segment(samples, openEnded: true);
+    if (sessions.isEmpty) return null;
+
+    // Only the trailing run is still open; everything before it is already
+    // stored and would be counted twice.
+    final open = sessions.last;
+    return open.kind == SessionKind.discharge ? open : null;
   }
 
   /// Charge cycles consumed, counted as battery moved divided by 100.
@@ -589,6 +627,7 @@ class AppUsageReport {
     required this.apps,
     required this.unattributedPct,
     required this.hasAccess,
+    required this.hasDischargeData,
   });
 
   final List<AppConsumption> apps;
@@ -598,6 +637,13 @@ class AppUsageReport {
   final double unattributedPct;
 
   final bool hasAccess;
+
+  /// Whether any discharge has been observed at all.
+  ///
+  /// Separated from [isEmpty] so the screen can tell "you have been plugged
+  /// in the whole time" apart from "you used the phone but no single app
+  /// accounts for it", which call for completely different explanations.
+  final bool hasDischargeData;
 
   bool get isEmpty => apps.isEmpty;
 }

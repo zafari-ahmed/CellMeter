@@ -6,6 +6,7 @@ import '../../core/state/providers.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/native/battery_channel.dart';
 import '../../data/native/native_models.dart';
+import '../../shared/widgets/app_dialog.dart';
 import '../../shared/widgets/metric_card.dart';
 import '../../shared/widgets/settings_accordion.dart';
 
@@ -334,22 +335,13 @@ class _WidgetsSection extends ConsumerWidget {
       if (shown) return;
     }
     if (!context.mounted) return;
-    await showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add it from the home screen'),
-        content: Text(
-          'Press and hold an empty part of your home screen, choose Widgets, '
-          'find CellMeter, then drag the ${kind.label.toLowerCase()} where you '
-          'want it.\n\nThe exact wording varies between launchers.',
-        ),
-        actions: [
-          FilledButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Got it'),
-          ),
-        ],
-      ),
+    await AppDialog.inform(
+      context,
+      title: 'Add it from the home screen',
+      message: 'Press and hold an empty part of your home screen, choose '
+          'Widgets, find CellMeter, then drag the '
+          '${kind.label.toLowerCase()} where you want it.\n\n'
+          'The exact wording varies between launchers.',
     );
   }
 }
@@ -470,33 +462,16 @@ class _DiagnosticsSection extends ConsumerWidget {
   }
 
   Future<void> _confirmReset(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Reset measurement data?'),
-        content: const Text(
-          'This permanently deletes every recorded reading, session and '
+    final confirmed = await AppDialog.confirm(
+      context,
+      title: 'Reset measurement data?',
+      message: 'This permanently deletes every recorded reading, session and '
           'capacity estimate, and CellMeter starts measuring from scratch.\n\n'
           'It cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.critical,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete and restart'),
-          ),
-        ],
-      ),
+      confirmLabel: 'Delete and restart',
+      destructive: true,
     );
-
-    if (confirmed != true) return;
+    if (!confirmed) return;
 
     await ref.read(batteryRepositoryProvider).resetForNewBattery();
     ref.invalidate(capacityEstimateProvider);

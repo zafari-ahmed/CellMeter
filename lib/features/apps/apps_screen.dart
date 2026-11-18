@@ -49,16 +49,29 @@ class _Breakdown extends ConsumerWidget {
     final theme = Theme.of(context);
 
     if (report.isEmpty) {
+      // "Plugged in the whole time" and "used the phone but nothing to
+      // attribute" are different situations with different fixes, and telling
+      // someone to wait when the real answer is "unplug it" is the kind of
+      // empty state that makes an app look broken.
       return ListView(
         padding: const EdgeInsets.all(16),
         physics: const AlwaysScrollableScrollPhysics(),
-        children: const [
-          SizedBox(height: 60),
+        children: [
+          const SizedBox(height: 60),
           EmptyState(
-            icon: Icons.apps_rounded,
-            title: 'Nothing to attribute yet',
-            message: 'Once CellMeter has watched a discharge with some screen '
-                'time in it, the apps you used will appear here.',
+            icon: report.hasDischargeData
+                ? Icons.apps_rounded
+                : Icons.power_rounded,
+            title: report.hasDischargeData
+                ? 'No screen time to attribute yet'
+                : 'Nothing has been used yet',
+            message: report.hasDischargeData
+                ? 'The battery has only dropped while the screen was off, so '
+                    'no app accounts for it. Use the phone for a few minutes '
+                    'and the breakdown will appear.'
+                : 'Your phone has been charging the whole time CellMeter has '
+                    'been watching. Unplug it and use it for a few minutes, '
+                    'and the apps you used will appear here.',
           ),
         ],
       );
