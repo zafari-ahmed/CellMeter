@@ -302,12 +302,21 @@ class ForegroundSlice {
     required this.label,
     required this.foregroundMs,
     required this.isSystemApp,
+    required this.isLauncher,
   });
 
   final String packageName;
   final String label;
   final int foregroundMs;
   final bool isSystemApp;
+
+  /// Whether this is the home-screen launcher.
+  ///
+  /// Tracked apart from [isSystemApp] because its foreground time is the
+  /// seams between apps rather than something the user set out to do, so it
+  /// tops the ranking on almost every device while being the one entry
+  /// nobody can act on.
+  final bool isLauncher;
 
   Duration get foreground => Duration(milliseconds: foregroundMs);
 
@@ -316,6 +325,7 @@ class ForegroundSlice {
         label: map['label'] as String? ?? '',
         foregroundMs: (map['foregroundMs'] as num?)?.toInt() ?? 0,
         isSystemApp: map['isSystemApp'] as bool? ?? false,
+        isLauncher: map['isLauncher'] as bool? ?? false,
       );
 }
 

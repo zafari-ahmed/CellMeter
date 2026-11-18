@@ -46,13 +46,37 @@ class AppUsageReader(context: Context) {
         val label: String,
         val foregroundMs: Long,
         val isSystemApp: Boolean,
+        val isLauncher: Boolean,
     ) {
         fun toMap(): Map<String, Any?> = mapOf(
             "packageName" to packageName,
             "label" to label,
             "foregroundMs" to foregroundMs,
             "isSystemApp" to isSystemApp,
+            "isLauncher" to isLauncher,
         )
+    }
+
+    /**
+     * The package currently handling the home screen.
+     *
+     * Flagged separately from [isSystemApp] because the launcher is a
+     * different kind of entry altogether: its foreground time is the seams
+     * between apps — every swipe home, every app switch — rather than
+     * something the user chose to do, and it therefore tops the list on almost
+     * every device. Resolved through the HOME intent rather than matched
+     * against a package name, so a third-party launcher is treated the same
+     * way as the stock one.
+     */
+    private val launcherPackage: String? by lazy {
+        try {
+            packageManager.resolveActivity(
+                Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME),
+                PackageManager.MATCH_DEFAULT_ONLY,
+            )?.activityInfo?.packageName
+        } catch (_: Throwable) {
+            null
+        }
     }
 
     fun hasUsageAccess(): Boolean {
@@ -127,6 +151,7 @@ class AppUsageReader(context: Context) {
                         label = labelFor(pkg),
                         foregroundMs = ms,
                         isSystemApp = isSystemApp(pkg),
+                        isLauncher = pkg == launcherPackage,
                     )
                 }
                 .sortedByDescending { it.foregroundMs }

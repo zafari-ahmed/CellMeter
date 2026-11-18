@@ -9,6 +9,7 @@ class AppConsumption {
     required this.label,
     required this.foreground,
     required this.isSystemApp,
+    this.isLauncher = false,
     this.attributedMah,
     this.attributedPct,
     this.shareOfForeground = 0,
@@ -18,6 +19,15 @@ class AppConsumption {
   final String label;
   final Duration foreground;
   final bool isSystemApp;
+
+  /// The home-screen launcher. Grouped away from the main ranking because its
+  /// time is app switching rather than deliberate use.
+  final bool isLauncher;
+
+  /// Whether this entry belongs in the collapsed "preinstalled" group rather
+  /// than the main list. The launcher always does; so does anything that
+  /// shipped with the phone.
+  bool get isPreinstalled => isLauncher || isSystemApp;
 
   /// Charge attributed to this app, mAh.
   final double? attributedMah;
@@ -115,6 +125,7 @@ class AppAttributor {
             label: slice.label,
             foreground: slice.foreground,
             isSystemApp: slice.isSystemApp,
+            isLauncher: slice.isLauncher,
             attributedPct: attributablePct * share,
             attributedMah:
                 attributableMah == null ? null : attributableMah * share,
@@ -134,7 +145,7 @@ class AppAttributor {
       for (final item in list) {
         final acc = byPackage.putIfAbsent(
           item.packageName,
-          () => _Accumulator(item.label, item.isSystemApp),
+          () => _Accumulator(item.label, item.isSystemApp, item.isLauncher),
         );
         acc.foregroundMs += item.foreground.inMilliseconds;
         acc.mah += item.attributedMah ?? 0;
@@ -152,6 +163,7 @@ class AppAttributor {
               label: entry.value.label,
               foreground: Duration(milliseconds: entry.value.foregroundMs),
               isSystemApp: entry.value.isSystemApp,
+              isLauncher: entry.value.isLauncher,
               attributedMah: entry.value.hasMah ? entry.value.mah : null,
               attributedPct: entry.value.pct,
               shareOfForeground: totalForegroundMs > 0
@@ -185,6 +197,7 @@ class AppAttributor {
               label: slice.label,
               foreground: slice.foreground,
               isSystemApp: slice.isSystemApp,
+              isLauncher: slice.isLauncher,
               shareOfForeground: total > 0 ? slice.foregroundMs / total : 0,
             ))
         .toList()
@@ -209,10 +222,11 @@ class AppAttributor {
 }
 
 class _Accumulator {
-  _Accumulator(this.label, this.isSystemApp);
+  _Accumulator(this.label, this.isSystemApp, this.isLauncher);
 
   final String label;
   final bool isSystemApp;
+  final bool isLauncher;
   int foregroundMs = 0;
   double mah = 0;
   double pct = 0;

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,8 +7,10 @@ import '../../core/format/units.dart';
 import '../../core/state/providers.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/repository/battery_repository.dart';
-import 'app_usage_list.dart';
+import '../../domain/analytics/app_attributor.dart';
 import '../../shared/widgets/metric_card.dart';
+import '../../shared/widgets/settings_accordion.dart';
+import 'app_usage_list.dart';
 
 /// Which apps the battery went to.
 ///
@@ -121,18 +125,16 @@ class _Breakdown extends ConsumerWidget {
             title: 'Time on screen',
             subtitle: 'Last 24 hours',
           ),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: AppUsageList(
-                apps: report.apps,
-                icons: icons,
-                isAttributed: false,
-                valueOf: (a) => a.foreground.inSeconds.toDouble(),
-                valueLabel: (a) => Units.duration(a.foreground),
-                captionOf: (a) => 'Tap for details and settings',
-              ),
-            ),
+          ..._listWithPreinstalled(
+            context: context,
+            apps: report.apps,
+            icons: icons,
+            isAttributed: false,
+            valueOf: (a) => a.foreground.inSeconds.toDouble(),
+            valueLabel: (a) => Units.duration(a.foreground),
+            captionOf: (a) => 'Tap for details and settings',
+            groupSummary: (list) =>
+                '${list.length} apps · ${Units.duration(_totalTime(list))}',
           ),
           const SizedBox(height: 20),
           _MethodNote(),
@@ -194,24 +196,93 @@ class _Breakdown extends ConsumerWidget {
           title: 'By battery used',
           subtitle: 'Charge lost while each app was the one on screen',
         ),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: AppUsageList(
-              apps: report.apps,
-              icons: icons,
-              isAttributed: true,
-              valueOf: (a) => a.attributedPct ?? 0,
-              valueLabel: (a) => Units.percent(a.attributedPct, decimals: 1),
-              captionOf: (a) => _caption(a.foreground, a.attributedMah),
-            ),
-          ),
+        ..._listWithPreinstalled(
+          context: context,
+          apps: report.apps,
+          icons: icons,
+          isAttributed: true,
+          valueOf: (a) => a.attributedPct ?? 0,
+          valueLabel: (a) => Units.percent(a.attributedPct, decimals: 1),
+          captionOf: (a) => _caption(a.foreground, a.attributedMah),
+          groupSummary: (list) =>
+              '${list.length} apps · ${Units.percent(_totalPct(list), decimals: 1)}',
         ),
         const SizedBox(height: 20),
         _MethodNote(),
       ],
     );
   }
+
+  /// Splits the ranking into apps the user installed and everything that
+  /// shipped with the phone, and puts the second group behind an accordion.
+  ///
+  /// Nothing is hidden — the totals still add up and the group is one tap
+  /// away. But the launcher alone outranks almost everything on a typical
+  /// device, because its foreground time is every swipe home and every app
+  /// switch rather than deliberate use, and it buries the entries a user can
+  /// actually act on. Grouping rather than filtering also avoids the trap of
+  /// dropping Settings, Camera or Messages, which are system apps on most
+  /// phones and perfectly legitimate things to see in a usage list.
+  List<Widget> _listWithPreinstalled({
+    required BuildContext context,
+    required List<AppConsumption> apps,
+    required Map<String, Uint8List> icons,
+    required bool isAttributed,
+    required double Function(AppConsumption) valueOf,
+    required String Function(AppConsumption) valueLabel,
+    required String Function(AppConsumption) captionOf,
+    required String Function(List<AppConsumption>) groupSummary,
+  }) {
+    final mine = apps.where((a) => !a.isPreinstalled).toList();
+    final preinstalled = apps.where((a) => a.isPreinstalled).toList();
+
+    return [
+      if (mine.isNotEmpty)
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: AppUsageList(
+              apps: mine,
+              icons: icons,
+              isAttributed: isAttributed,
+              valueOf: valueOf,
+              valueLabel: valueLabel,
+              captionOf: captionOf,
+            ),
+          ),
+        ),
+      if (preinstalled.isNotEmpty) ...[
+        if (mine.isNotEmpty) const SizedBox(height: 12),
+        SettingsAccordion(
+          icon: Icons.phone_android_rounded,
+          title: 'Preinstalled & system apps',
+          summary: groupSummary(preinstalled),
+          accent: AppColors.info,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
+              child: AppUsageList(
+                apps: preinstalled,
+                icons: icons,
+                isAttributed: isAttributed,
+                valueOf: valueOf,
+                valueLabel: valueLabel,
+                captionOf: captionOf,
+              ),
+            ),
+          ],
+        ),
+      ],
+    ];
+  }
+
+  Duration _totalTime(List<AppConsumption> apps) => Duration(
+        milliseconds:
+            apps.fold<int>(0, (sum, a) => sum + a.foreground.inMilliseconds),
+      );
+
+  double _totalPct(List<AppConsumption> apps) =>
+      apps.fold<double>(0, (sum, a) => sum + (a.attributedPct ?? 0));
 
   String _caption(Duration foreground, double? mah) {
     final parts = <String>['${Units.duration(foreground)} on screen'];
