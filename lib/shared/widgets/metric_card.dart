@@ -126,6 +126,7 @@ class MetricRow extends StatelessWidget {
     this.valueColor,
     this.caption,
     this.icon,
+    this.dense = false,
   });
 
   final String label;
@@ -134,28 +135,42 @@ class MetricRow extends StatelessWidget {
   final String? caption;
   final IconData? icon;
 
+  /// Tightens the row for the long specification lists inside settings, where
+  /// Material's default body size turns a dozen facts into several screens.
+  final bool dense;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final labelStyle = dense
+        ? theme.textTheme.bodyMedium?.copyWith(fontSize: 13.5, height: 1.25)
+        : theme.textTheme.bodyMedium;
+    final captionStyle = dense
+        ? theme.textTheme.bodySmall?.copyWith(fontSize: 11.5, height: 1.3)
+        : theme.textTheme.bodySmall;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 9),
+      padding: EdgeInsets.symmetric(vertical: dense ? 6 : 9),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 17, color: theme.colorScheme.onSurfaceVariant),
+            Icon(
+              icon,
+              size: dense ? 15 : 17,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
             const SizedBox(width: 10),
           ],
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: theme.textTheme.bodyMedium),
+                Text(label, style: labelStyle),
                 if (caption != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 2),
-                    child: Text(caption!, style: theme.textTheme.bodySmall),
+                    child: Text(caption!, style: captionStyle),
                   ),
               ],
             ),
@@ -163,7 +178,7 @@ class MetricRow extends StatelessWidget {
           const SizedBox(width: 12),
           Text(
             value,
-            style: theme.textTheme.bodyMedium?.copyWith(
+            style: labelStyle?.copyWith(
               fontWeight: FontWeight.w700,
               color: valueColor,
               fontFeatures: const [FontFeature.tabularFigures()],
