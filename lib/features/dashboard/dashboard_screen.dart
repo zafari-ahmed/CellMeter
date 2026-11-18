@@ -39,7 +39,9 @@ class DashboardScreen extends ConsumerWidget {
       body: RefreshIndicator(
         onRefresh: () => ref.read(syncControllerProvider.notifier).refreshNow(),
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+          // Bottom padding clears the floating settings button, which would
+          // otherwise sit on top of the last card.
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
           physics: const AlwaysScrollableScrollPhysics(),
           children: [
             _Hero(snapshot: snapshot, settings: settings),
@@ -364,7 +366,39 @@ class _HealthSummary extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final estimate = ref.watch(capacityEstimateProvider).value;
+    final estimateAsync = ref.watch(capacityEstimateProvider);
+
+    // An error here must not be dressed up as "still measuring". Reading only
+    // `.value` collapses a failure and an empty result into the same null, and
+    // the user would wait indefinitely for a number that was never coming.
+    if (estimateAsync.hasError) {
+      return Column(
+        children: [
+          const SectionHeader(title: 'Battery health'),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline_rounded,
+                      color: AppColors.critical),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Text(
+                      'Could not work out battery health. Pull down to try '
+                      'again.',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    final estimate = estimateAsync.value;
 
     if (estimate == null || estimate.isEmpty) {
       return Column(

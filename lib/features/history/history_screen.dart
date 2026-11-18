@@ -158,13 +158,15 @@ class _LevelChart extends ConsumerWidget {
   }
 }
 
+// Reads the database directly. Ingestion is the sync controller's job and it
+// invalidates this when it pulls something new; awaiting its future from here
+// would point the dependency back at something that depends on this.
 final _dayOfSamplesProvider =
-    FutureProvider.autoDispose<List<BatterySnapshot>>((ref) async {
-  await ref.watch(syncControllerProvider.future);
-  return ref
+    FutureProvider.autoDispose<List<BatterySnapshot>>(
+  (ref) => ref
       .watch(batteryRepositoryProvider)
-      .recentSamples(window: const Duration(hours: 24));
-});
+      .recentSamples(window: const Duration(hours: 24)),
+);
 
 class _TodaySummary extends ConsumerWidget {
   const _TodaySummary();

@@ -113,7 +113,7 @@ class SyncController extends AsyncNotifier<SyncResult> {
     return repository.sync();
   }
 
-  /// Ingests anything new and invalidates the derived views.
+  /// Ingests anything new and refreshes the derived views.
   Future<void> refresh() async {
     final repository = ref.read(batteryRepositoryProvider);
     try {
@@ -163,22 +163,29 @@ final syncControllerProvider =
 
 // --------------------------------------------------------------- analysis
 
-final capacityEstimateProvider = FutureProvider<CapacityEstimate>((ref) async {
-  // Make sure anything the sampler spooled is in the database first, or the
-  // estimate silently describes the past.
-  await ref.watch(syncControllerProvider.future);
-  return ref.watch(batteryRepositoryProvider).capacityEstimate();
-});
+// The analysis providers deliberately do NOT watch [syncControllerProvider].
+//
+// Awaiting the sync future from here reads as the obvious way to guarantee
+// fresh data, but it points the dependency the wrong way: the sync controller
+// invalidates these same providers when it finishes, so each one ended up
+// depending on something that depends on it, and Riverpod rejected the graph
+// with a CircularDependencyError.
+//
+// The edge now runs one way only. [SyncController] owns ingestion and
+// invalidates these when it has pulled something new; they simply read the
+// database. The shell watches the controller so a sync is always running.
 
-final capacityHistoryProvider = FutureProvider<List<CapacityLog>>((ref) async {
-  await ref.watch(syncControllerProvider.future);
-  return ref.watch(batteryRepositoryProvider).capacityHistory();
-});
+final capacityEstimateProvider = FutureProvider<CapacityEstimate>(
+  (ref) => ref.watch(batteryRepositoryProvider).capacityEstimate(),
+);
 
-final drainProfileProvider = FutureProvider<DrainProfile>((ref) async {
-  await ref.watch(syncControllerProvider.future);
-  return ref.watch(batteryRepositoryProvider).drainProfile();
-});
+final capacityHistoryProvider = FutureProvider<List<CapacityLog>>(
+  (ref) => ref.watch(batteryRepositoryProvider).capacityHistory(),
+);
+
+final drainProfileProvider = FutureProvider<DrainProfile>(
+  (ref) => ref.watch(batteryRepositoryProvider).drainProfile(),
+);
 
 final liveDrainProvider = FutureProvider.autoDispose<LiveDrain>((ref) async {
   // Re-runs on every live reading so the figure tracks what is happening now.
@@ -206,10 +213,9 @@ final timeToChargeLimitProvider =
       .timeToFull(targetPct: target.toDouble());
 });
 
-final recentSessionsProvider = FutureProvider<List<BatterySession>>((ref) async {
-  await ref.watch(syncControllerProvider.future);
-  return ref.watch(batteryRepositoryProvider).sessions(limit: 200);
-});
+final recentSessionsProvider = FutureProvider<List<BatterySession>>(
+  (ref) => ref.watch(batteryRepositoryProvider).sessions(limit: 200),
+);
 
 final sessionsOfKindProvider =
     FutureProvider.family<List<BatterySession>, SessionKind>((ref, kind) async {
@@ -217,15 +223,13 @@ final sessionsOfKindProvider =
   return all.where((s) => s.kind == kind).toList();
 });
 
-final appUsageProvider = FutureProvider<AppUsageReport>((ref) async {
-  await ref.watch(syncControllerProvider.future);
-  return ref.watch(batteryRepositoryProvider).appUsage();
-});
+final appUsageProvider = FutureProvider<AppUsageReport>(
+  (ref) => ref.watch(batteryRepositoryProvider).appUsage(),
+);
 
-final cyclesUsedProvider = FutureProvider<double>((ref) async {
-  await ref.watch(syncControllerProvider.future);
-  return ref.watch(batteryRepositoryProvider).cyclesUsed();
-});
+final cyclesUsedProvider = FutureProvider<double>(
+  (ref) => ref.watch(batteryRepositoryProvider).cyclesUsed(),
+);
 
 final databaseStatsProvider = FutureProvider<DatabaseStats>((ref) async {
   return ref.watch(batteryRepositoryProvider).stats();

@@ -120,15 +120,26 @@ class TimeSeriesChart extends StatelessWidget {
                 showTitles: true,
                 reservedSize: 28,
                 interval: _bottomInterval(spots),
-                getTitlesWidget: (value, meta) => Padding(
-                  padding: const EdgeInsets.only(top: 6),
-                  child: Text(
-                    Units.clock(
-                      DateTime.fromMillisecondsSinceEpoch(value.toInt()),
+                getTitlesWidget: (value, meta) {
+                  // fl_chart draws a label at the axis minimum as well as at
+                  // every interval step, and with a short window the first
+                  // interval step lands almost on top of it — two timestamps
+                  // overprinted at the left edge. Drop any label that falls
+                  // within a few percent of the start.
+                  final span = meta.max - meta.min;
+                  if (span > 0 && (value - meta.min) < span * 0.08) {
+                    return const SizedBox.shrink();
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                      Units.clock(
+                        DateTime.fromMillisecondsSinceEpoch(value.toInt()),
+                      ),
+                      style: theme.textTheme.labelSmall,
                     ),
-                    style: theme.textTheme.labelSmall,
-                  ),
-                ),
+                  );
+                },
               ),
             ),
           ),

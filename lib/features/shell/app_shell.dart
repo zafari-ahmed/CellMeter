@@ -83,6 +83,11 @@ class _AppShellState extends ConsumerState<AppShell>
 
   @override
   Widget build(BuildContext context) {
+    // Nothing else depends on the sync controller any more — the analysis
+    // providers are invalidated by it rather than awaiting it — so the shell
+    // is what keeps ingestion running while the app is open.
+    ref.watch(syncControllerProvider);
+
     // Keeps the home screen widgets fed while the app is open. The sampler
     // keeps them live when it is not.
     ref.watch(widgetFeedProvider);
