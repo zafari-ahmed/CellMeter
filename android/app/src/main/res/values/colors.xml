@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  CellMeter's widget palette.
+
+  These are fixed. Widgets deliberately do not follow the app's light / dark /
+  AMOLED setting, and do not opt into Material You wallpaper tinting, because
+  colour here is load bearing: green means healthy or charging, yellow means
+  "this is your limit", and the severity ramp drives temperature. A widget
+  recoloured to the user's wallpaper would still be legible but would stop
+  meaning anything, and a glance at the widget has to mean the same thing as a
+  glance at the app.
+-->
+<resources>
+    <color name="widget_surface">#18263E</color>
+    <color name="widget_surface_deep">#101B2D</color>
+    <color name="widget_track">#2A3B5C</color>
+
+    <color name="widget_primary">#39E75F</color>
+    <color name="widget_accent">#FFC928</color>
+    <color name="widget_info">#3DAEFF</color>
+
+    <color name="widget_text">#EDF2F9</color>
+    <color name="widget_text_muted">#94A7C4</color>
+    <color name="widget_text_faint">#5F7599</color>
+
+    <color name="widget_good">#9CE640</color>
+    <color name="widget_fair">#FFC928</color>
+    <color name="widget_poor">#FF8A3D</color>
+    <color name="widget_critical">#FF4D4D</color>
+</resources>

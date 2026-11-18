@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CellMeter</string>
+
+    <!-- Widget chrome -->
+    <string name="widget_brand">CELLMETER</string>
+    <string name="widget_percent">%</string>
+    <string name="widget_placeholder_level">--</string>
+    <string name="widget_placeholder_dash">—</string>
+
+    <string name="widget_label_current">CURRENT</string>
+    <string name="widget_label_power">POWER</string>
+    <string name="widget_label_temp">TEMP</string>
+    <string name="widget_label_temperature">TEMPERATURE</string>
+    <string name="widget_label_remaining">REMAINING</string>
+    <string name="widget_label_health">HEALTH</string>
+
+    <string name="widget_health_measuring">Still measuring</string>
+
+    <!-- Picker entries -->
+    <string name="widget_battery_label">CellMeter battery</string>
+    <string name="widget_battery_description">Live battery level, current, temperature and time remaining. Resize from a compact readout to a full panel.</string>
+    <string name="widget_health_label">CellMeter health</string>
+    <string name="widget_health_description">Measured battery capacity and health as a share of the original.</string>
+
+    <!-- Content descriptions, read aloud by screen readers -->
+    <string name="widget_gauge_a11y">Battery level</string>
+    <string name="widget_health_a11y">Battery health</string>
+</resources>

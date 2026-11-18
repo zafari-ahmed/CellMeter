@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The resizable battery widget: 2x1 up to 4x2.
+
+  updatePeriodMillis is set to 30 minutes rather than 0. The real updates are
+  pushed from the sampler service whenever a reading changes meaningfully,
+  which is far more often than Android's 30-minute floor allows. This value is
+  only a safety net: if the service has been killed and not yet restarted, the
+  widget still refreshes itself from a direct battery read rather than sitting
+  frozen.
+
+  Cell sizing follows the launcher formula 70 * n - 30 dp.
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:initialLayout="@layout/widget_battery_compact"
+    android:previewLayout="@layout/widget_battery_compact"
+    android:minWidth="110dp"
+    android:minHeight="40dp"
+    android:minResizeWidth="110dp"
+    android:minResizeHeight="40dp"
+    android:maxResizeWidth="250dp"
+    android:maxResizeHeight="110dp"
+    android:targetCellWidth="2"
+    android:targetCellHeight="1"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen"
+    android:description="@string/widget_battery_description"
+    android:updatePeriodMillis="1800000" />

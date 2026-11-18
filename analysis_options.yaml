@@ -1,0 +1,20 @@
+# Static analysis configuration for CellMeter.
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - "**/*.g.dart"
+  errors:
+    # Generated drift code is checked by its own builder.
+    invalid_annotation_target: ignore
+
+linter:
+  rules:
+    # Field initialisers here are ordered to read as a dependency list rather
+    # than to satisfy the shortest possible form.
+    prefer_initializing_formals: false
+    # Documentation on public API is expected in the domain and data layers.
+    prefer_const_constructors: true
+    prefer_final_locals: true
+    avoid_print: true
+    unawaited_futures: true
